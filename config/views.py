@@ -1,6 +1,7 @@
+from contextlib import redirect_stderr
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import hashlib
 
 def index(request):
@@ -62,7 +63,7 @@ def write(request):
       # insert into article (title, content, user_id) values (?, ?, ?)
       article = Article(title=title, content=content, user=user)
       article.save()
-      return render(request, 'write_success.html')
+      return redirect('/article/list/')
     except:
       return render(request, 'write_fail.html')
 
