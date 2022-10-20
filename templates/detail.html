@@ -14,9 +14,17 @@
 <div class="container text-right">
   <a href='' class="btn btn-default" id="list">목록</a>
   <a href='' class="btn btn-default" id="update">수정</a>
-  <a href='/article/delete/{{ article.id }}/' class="btn btn-default" id="delete">
+  <a href='#' onclic="delete()" class="btn btn-default" id="delete">
     삭제
   </a>
 </div>
+<script>
+  function del() {
+    if (confirm("정말 삭제하시겠습니까?")) {
+      location = "/article/delete/{{article.id}}/";
+    }
+    
+  }
+</script>
 
 {% endblock %}
