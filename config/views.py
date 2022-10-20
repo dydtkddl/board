@@ -9,7 +9,7 @@ def index(request):
   # print( m.hexdigest() )
   # s = '37268335dd6931045bdcdf92623ff819a64244b53d0e746d438797349d4da578'
   # print( len(s) )
-  return render(request, '/index.html')
+  return render(request, 'index.html')
 
 from django.http import HttpResponseRedirect
 from article.models import User
