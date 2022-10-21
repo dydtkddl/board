@@ -1,0 +1,11 @@
+<body>
+    <form method = 'post' enctype = 'multipart/form-data'>
+        {% csrf_token %}
+        <input type="file" name ='abc'>
+        <input type="file" name ='abc'>
+        <input type="file" name ='abc'>
+        <input type="file" name ='xyz' multiple>
+        <button type="submit">제출</button>
+
+    </form>
+</body>

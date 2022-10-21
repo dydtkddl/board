@@ -8,19 +8,24 @@
       <div class="panel-heading">{{ article.title }}</div>
       <div class="panel-body">{{ article.content }}</div>
       <div class="panel-footer">{{ article.user.name }}</div>
+      <div class="panel-footer"></div>
     </div>
   </div>
 </div>
 <div class="container text-right">
-  <a href='' class="btn btn-default" id="list">목록</a>
-  <a href='' class="btn btn-default" id="update">수정</a>
-  <a href='#' onclic="delete()" class="btn btn-default" id="delete">
+  <a href='/article/list/' class="btn btn-default" id="list">목록</a>
+  <a href='#'onclick='modify(event)' class="btn btn-default" id="update">수정</a>
+  <a href='#' onclick="del()" class="btn btn-default" id="delete">
     삭제
   </a>
 </div>
 <script>
+  function modify(e) {
+    
+  }
   function del() {
     if (confirm("정말 삭제하시겠습니까?")) {
+      
       location = "/article/delete/{{article.id}}/";
     }
     

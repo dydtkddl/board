@@ -1,9 +1,11 @@
 from contextlib import redirect_stderr
+from email.policy import HTTP
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect
 import hashlib
-
+from django.core.paginator import Paginator
+from article.models import *
 def index(request):
   # m = hashlib.sha256()
   # m.update(b"testtest")
@@ -49,13 +51,65 @@ def signout(request):
 
   return HttpResponseRedirect('/index/')
 
+def download(request):
+  id = request.GET.get('id')
+  file_attc = FileAttach.objects.get(id = id)
+  
+  filename = file_attc.save_filename
+  with open('c:/django/%s'%filename ,'rb') as f:
+    res = HttpResponse(
+      f,
+      content_type = 'application/octet-stream',
+      # content_disposition='attachment; filename = %s' %filename
+    )
+    res['content-Disposition'] = 'attachment; filename = %s' %filename
+  return res
+
 from article.models import Article
+import os, time
+def upload(request):
+  if request.method == 'POST':
+    file = request.FILES.getlist('abc')
+    if len(file)==0:
+      pass
+    for f in file:
+      name = f.name
+      size = f.size
+      save_name = name
+      # 실제저장소에 이미 같은 이름이 있는지 확인후 처리과정
+      if os.path.isfile('c:/django/%s' %save_name):
+        ext = save_name[save_name.rfind('.'):]
+        n = save_name[:save_name.rfind('.')]
+        save_name = '%s_%s%s' %(n, time.time(), ext)
+      # 파일 실제 저장소에 저장하는과정
+      with open('c:/django/%s' %save_name, 'wb') as u_file:
+        for chunk in f.chunks():
+          u_file.write(chunk)
+      # 데이터베이스에 반영하는 과정
+      File(save_filename = save_name, o_filename = name, filesize = size).save()
+    # 포스트로 파일 받아서 파일 변수에 담기
+    # 파일 명/ 파일 사이즈 변수에 담기
+    # 파일 정해둔 경로에 저장하기
+    # 데이터베이스에 반영시키기()
+    # 데이터베이스에 담고/실제파일을 실제로 저장하는건 업무입장에서는 한번에 일어나는 일이지만
+    # 코드입장에서는 두개의 코드로 독립적으로 일어나는것
+    # 만약에 코드하나는 잘작동했지만, 하나가 작동이 잘못된다면?
+    # 혼선이생기고 일치하지 않는경우가 생길수 있음
+    # 그래서 둘중에 하나가 실패하면 같이 실패할수 있게 만든다던가
+    # 둘다 성공해야만 반영되게끔 만들게 해줘야한다
+    # 트랜잭션이라고 한다.
+    # 업무입장에서는 한번에 일어나지만
+    # 코드입장에서는 몇개로 분할해서 일어나는 일인지 코드작성 전에 쪼개고 분석해볼 필요가 있다
+    return HttpResponse('hi')
+  return render(request, 'upload.html')
+  
+    
 
 def write(request):
   if request.method == 'POST':
     title = request.POST.get('title')
     content = request.POST.get('content')
-    
+    files = request.FILES.getlist('file')
     try:
       email = request.session['email']
       # select * from user where email = ?
@@ -63,16 +117,50 @@ def write(request):
       # insert into article (title, content, user_id) values (?, ?, ?)
       article = Article(title=title, content=content, user=user)
       article.save()
+
+      if len(files)==0:
+        pass
+      for f in files:
+        name = f.name
+        size = f.size
+        save_name = name
+        # 실제저장소에 이미 같은 이름이 있는지 확인후 처리과정
+        if os.path.isfile('c:/django/%s' %save_name):
+          ext = save_name[save_name.rfind('.'):]
+          n = save_name[:save_name.rfind('.')]
+          save_name = '%s_%s%s' %(n, time.time(), ext)
+        # 파일 실제 저장소에 저장하는과정
+        with open('c:/django/%s' %save_name, 'wb') as u_file:
+          for chunk in f.chunks():
+            u_file.write(chunk)
+        # 데이터베이스에 반영하는 과정
+        FileAttach(save_filename = save_name, o_filename = name, filesize = size, article=article).save()
       return redirect('/article/list/')
     except:
       return render(request, 'write_fail.html')
 
   return render(request, 'write.html')
 
+
+
+
 def list(request):
   # select * from article order by id desc
   article_list = Article.objects.order_by('-id')
-  context = { 
+  p= Paginator(article_list,10)
+  page = request.GET.get('page')
+
+  try:
+    article_list = p.page(page)
+  except:
+    page = 1
+    article_list = p.page(page)
+  start_page = (int(page)-1)//10*10 +1
+  end_page = start_page+9
+  if p.num_pages < end_page:
+    end_page = p.num_pages
+  context = {
+    'page_info' : range(start_page, end_page+1), 
     'article_list' : article_list 
   }
   return render(request, 'list.html', context)
@@ -110,8 +198,17 @@ def update(request, id):
 def delete(request, id):
   try:
     # select * from article where id = ?
+    name = request.session['name']
     article = Article.objects.get(id=id)
-    article.delete()
+    if article.user.name ==name:
+      article.delete()
+    else:
+      return HttpResponse('''
+      <script>
+        alert('작성자만 삭제할 수 있습니다.');
+        location = "/article/detail/%s/";
+        </script>
+      '''%article.id)
     return render(request, 'delete_success.html')
   except:
     return render(request, 'delete_fail.html')

@@ -3,7 +3,7 @@
 
 <div class="jumbotron">
   <div class="container text-center">
-    <form method="post" action="/article/write/">
+    <form method="post" enctype='multipart/form-data' action="/article/write/">
       {% csrf_token %}
       <div class="form-group">
         <label for="title">Title:</label>
@@ -13,6 +13,7 @@
         <label for="content">Content:</label>
         <textarea class="form-control" rows="5" name="content" id="content"></textarea>
       </div>
+      <input type="file" name = 'file' multiple accept="image/png,image/jpeg">
       <button type="submit" id="complete" class="btn btn-primary btn-block">
         글쓰기
       </button>
